@@ -12,7 +12,11 @@ import javax.persistence.Table;
 import demo.std.model.api.StdLoan;
 import demo.std.model.api.StdRequest;
 import demo.std.model.api.StdRequestImpl;
-
+/**
+ * Std loan entity
+ * @author nanu
+ *
+ */
 @Entity
 @Table(name = "stdloan")
 public class StdLoanImpl implements StdLoan{
