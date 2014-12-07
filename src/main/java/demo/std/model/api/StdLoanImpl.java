@@ -13,7 +13,7 @@ import demo.std.model.api.StdLoan;
 import demo.std.model.api.StdRequest;
 import demo.std.model.api.StdRequestImpl;
 /**
- * Std loan entity
+ * Std loan entity 1
  * @author nanu
  *
  */
