@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Usage: ./script.sh <repo_name>
+# Example: ./script.sh develop
+# Example: ./script.sh main (for main branch without .Branch. pattern)
+
+REPO_NAME="${1:-main}"
+
+if [ "$REPO_NAME" = "main" ]; then
+  # For main branch: find URIs without .Branch. pattern
+  jq -r --arg repo "$REPO_NAME" '
+    .children[]
+    | select(.folder == false)
+    | select(.uri | endswith(".jar"))
+    | select(.uri | contains(".Branch.") | not)
+    | .uri
+    | ltrimstr("/")
+    | capture("(?<basename>.*)-(?<version>[0-9]+\\.[0-9]+\\.[0-9]+)\\.jar$")
+    | "\(.basename)|\(.version)"
+  ' | sort -t'|' -k1,1 -k2,2V | awk -F'|' '
+    {
+      if ($1 != prev_base || NR == 1) {
+        if (prev_base != "") print prev_base "-" prev_ver ".jar"
+        prev_base = $1
+        prev_ver = $2
+      } else {
+        prev_ver = $2
+      }
+    }
+    END {
+      if (prev_base != "") print prev_base "-" prev_ver ".jar"
+    }
+  '
+else
+  # For branch-specific: find URIs with .Branch.<repo_name> pattern
+  jq -r --arg repo "$REPO_NAME" '
+    .children[]
+    | select(.folder == false)
+    | select(.uri | endswith(".jar"))
+    | select(.uri | contains(".Branch.\($repo)"))
+    | .uri
+    | ltrimstr("/")
+    | capture("(?<basename>.*)-(?<version>[0-9]+\\.[0-9]+\\.[0-9]+)-.*\\.Branch\\.\($repo).*\\.jar$")
+    | "\(.basename)|\(.version)"
+  ' | sort -t'|' -k1,1 -k2,2V | awk -F'|' '
+    {
+      if ($1 != prev_base || NR == 1) {
+        if (prev_base != "") print prev_base "-" prev_ver
+        prev_base = $1
+        prev_ver = $2
+      } else {
+        prev_ver = $2
+      }
+    }
+    END {
+      if (prev_base != "") print prev_base "-" prev_ver
+    }
+  '
+fi
